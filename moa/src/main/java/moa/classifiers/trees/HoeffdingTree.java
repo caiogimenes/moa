@@ -51,6 +51,8 @@ import moa.core.StringUtils;
 import moa.core.Utils;
 import moa.options.ClassOption;
 import com.yahoo.labs.samoa.instances.Instance;
+import scala.collection.immutable.HashSet;
+import scala.collection.immutable.List;
 
 /**
  * Hoeffding Tree or VFDT.
@@ -134,6 +136,11 @@ public class HoeffdingTree extends AbstractClassifier implements MultiClassClass
             "How many instances between memory consumption checks.", 1000000,
             0, Integer.MAX_VALUE);
 
+    public IntOption regularizationFactor = new IntOption(
+            "regularizationFactor", 'x',
+            "Allows trees to penalize growth", 1,
+            0, Integer.MAX_VALUE);
+
     public IntOption gracePeriodOption = new IntOption(
             "gracePeriod",
             'g',
@@ -166,6 +173,8 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
 
     public FlagOption noPrePruneOption = new FlagOption("noPrePrune", 'p',
             "Disable pre-pruning.");
+
+    public Set<AttributeSplitSuggestion> usedFeatures = new HashSet<AttributeSplitSuggestion>();
 
     public static class FoundNode {
 
@@ -665,6 +674,14 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
         if (!node.observedClassDistributionIsPure()) {
             SplitCriterion splitCriterion = (SplitCriterion) getPreparedClassOption(this.splitCriterionOption);
             AttributeSplitSuggestion[] bestSplitSuggestions = node.getBestSplitSuggestions(splitCriterion, this);
+            if (this.usedFeatures != null && !this.usedFeatures.isEmpty()) {
+                for (AttributeSplitSuggestion suggestion : bestSplitSuggestions) {
+                    if (suggestion.splitTest != null && !this.usedFeatures.contains(suggestion)) {
+                        double newMerit = suggestion.merit * this.regularizationFactor.getValue();
+                        suggestion.merit = newMerit;
+                    }
+                }
+            }
             Arrays.sort(bestSplitSuggestions);
             boolean shouldSplit = false;
             if (bestSplitSuggestions.length < 2) {
@@ -717,6 +734,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
                     // preprune - null wins
                     deactivateLearningNode(node, parent, parentIndex);
                 } else {
+                    this.usedFeatures.add(splitDecision);
                     SplitNode newSplit = newSplitNode(splitDecision.splitTest,
                             node.getObservedClassDistribution(),splitDecision.numSplits() );
                     for (int i = 0; i < splitDecision.numSplits(); i++) {
