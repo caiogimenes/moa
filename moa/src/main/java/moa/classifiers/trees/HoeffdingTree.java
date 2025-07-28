@@ -51,8 +51,6 @@ import moa.core.StringUtils;
 import moa.core.Utils;
 import moa.options.ClassOption;
 import com.yahoo.labs.samoa.instances.Instance;
-import scala.collection.immutable.HashSet;
-import scala.collection.immutable.List;
 
 /**
  * Hoeffding Tree or VFDT.
