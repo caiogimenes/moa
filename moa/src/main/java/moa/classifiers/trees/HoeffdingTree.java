@@ -136,8 +136,8 @@ public class HoeffdingTree extends AbstractClassifier implements MultiClassClass
 
     public IntOption regularizationFactor = new IntOption(
             "regularizationFactor", 'x',
-            "Allows trees to penalize growth", 1,
-            0, Integer.MAX_VALUE);
+            "Allows trees to penalize growth", 10,
+            1, Integer.MAX_VALUE);
 
     public IntOption gracePeriodOption = new IntOption(
             "gracePeriod",
@@ -675,7 +675,7 @@ public FlagOption binarySplitsOption = new FlagOption("binarySplits", 'b',
             if (this.usedFeatures != null && !this.usedFeatures.isEmpty()) {
                 for (AttributeSplitSuggestion suggestion : bestSplitSuggestions) {
                     if (suggestion.splitTest != null && !this.usedFeatures.contains(suggestion)) {
-                        double newMerit = suggestion.merit * this.regularizationFactor.getValue();
+                        double newMerit = suggestion.merit * this.regularizationFactor.getValue()/10;
                         suggestion.merit = newMerit;
                     }
                 }
